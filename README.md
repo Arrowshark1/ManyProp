@@ -7,4 +7,9 @@ ___
 
 ## Usage
 ___
-
+- to run use `python .\ManyProp.py --smiles MOL1 MOL2 ... --mol_fracs FRAC1 FRAC2 ... --checkpoints_dir PATH_TO_CHECKPOINTS --num_mols NUMBER_OF_MOLECULES`
+    - requires models to be present in user provided checkpoints path
+    - number of fractions provided must either equal number of molecules or one minus the number of molecules 
+- to train on a dataset use `python .\ManyProp.py --train True --data_path PATH_TO_DATA --mol_features_path PATH_TO_FEATURES --num_mols NUMBER_OF_MOLECULES --smiles_columns COL1 COL2 ... --targets_column TGT_COL --mol_features_columns FEAT1 FEAT2 ... --mol_frac_columns FRAC1 FRAC2 ...`
+    - dataset must come in the form of a .csv file
+    - can only contain specified columns 
