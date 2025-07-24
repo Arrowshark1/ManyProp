@@ -1,6 +1,7 @@
 import torch
 from ManyProp.data.data_pipeline import denormalize
 from ManyProp.model.mpnn import GCN
+from ManyProp.model.mpnn import MPNNModel
 from ManyProp.utils import single_dl
 import os
 import numpy as np
@@ -8,7 +9,7 @@ import numpy as np
 def predict(args):
     mods = []
     for m in range(args().num_folds):
-        model = GCN(in_dim=args().input_dim, args=args)
+        model = MPNNModel(args=args) if args().lightningMPNN else GCN(in_dim=args().input_dim, args=args)
         model.to(args().device)
 
         path = f"{args().checkpoints_dir}/model{m}.pth"

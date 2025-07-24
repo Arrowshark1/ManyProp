@@ -5,6 +5,7 @@ from ManyProp.model.evaluate import evaluate
 from ManyProp.model.test import test
 from ManyProp.utils import make_splits
 from ManyProp.data.data_pipeline import parse_data, make_dl
+from pytorch_lightning import Trainer
 
 def train(model, args, data_loader):
     loss_fn = args.get_loss_fn()
@@ -69,4 +70,29 @@ def run_training(args):
     return losses
 
 def lightning_train(args):
-    pass
+    losses = []
+    for fold in range(args().num_folds):
+        data_list = parse_data(args=args, num_dp=args().data_points)
+        args.save()
+        train_data, val_data, test_data = make_splits(args=args, data_list=data_list)
+        train_dl = make_dl(args=args, data_list=train_data)
+        val_dl = make_dl(args=args, data_list=val_data)
+        test_dl = make_dl(args=args, data_list=test_data)
+
+        print(f"fold: {fold}")
+        model = MPNNModel(args)
+
+        trainer = Trainer(
+            max_epochs=args().epochs,
+            accelerator='auto',
+            callbacks=[],
+            log_every_n_steps=10
+        )
+
+        trainer.fit(model, train_dl, val_dl)
+        trainer.test(model, dataloaders=test_dl)
+
+        torch.save(model.state_dict(), f"checkpoints/model{fold}.pth")
+        #for log in trainer.logged_metrics:
+        #    losses.append([fold, log.get("epoch", -1), log.get("train_loss"), log.get("val_loss")])
+    return losses

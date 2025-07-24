@@ -50,6 +50,7 @@ class Args:
         parser.add_argument('--normalize', type=bool, default=False, help='normalizaiton of target values')
         parser.add_argument('--mean', type=float, default=None, help='mean of target dataset. Calculated if not provided')
         parser.add_argument('--std', type=float, default=None, help='standard deviation of target dataset. Calculated if not provided')
+        parser.add_argument('--lightningMPNN', type=bool, default=True, help='if true, uses a MPNN as opposed to a GCN')
 
         return parser.parse_known_args()
 

@@ -1,6 +1,11 @@
 data/
 checkpoints/
 manypropenv/
+lightning_logs/
+
+*~
+~.swp
+~.swo
 
 te-compiled / optimized / DLL files
 __pycache__/

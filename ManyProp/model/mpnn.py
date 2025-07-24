@@ -65,7 +65,7 @@ class GCN(torch.nn.Module):
         
 class MPNNLayer(MessagePassing):
     def __init__(self, args, in_dim, out_dim):
-        super().init(aggr='add')
+        super().__init__(aggr='add')
         self.args = args()
         self.lin = torch.nn.Linear(in_dim, out_dim)
 
@@ -82,10 +82,12 @@ class MPNNLayer(MessagePassing):
 class MPNNModel(pl.LightningModule):
     def __init__(self, args, out_dim=1):
         super().__init__()
+        self.loss_fn = args.get_loss_fn()
         self.args = args()
+        self.dropout = torch.nn.Dropout(p=args().dropout)
         self.mp1 = MPNNLayer(args, in_dim=self.args.input_dim, out_dim=self.args.hidden_size)
-        self.mp2 = MPNNLayer(args, in_dim=self.args.hidden_dim, out_dim=self.args.hidden_size)
-        self.fc = torch.nn.Linear(self.args.hidden_dim, out_dim)
+        self.mp2 = MPNNLayer(args, in_dim=self.args.hidden_size, out_dim=self.args.hidden_size)
+        self.fc = torch.nn.Linear(self.args.hidden_size, out_dim)
         
     def forward(self, data, mixture_sizes, fracs):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -93,7 +95,7 @@ class MPNNModel(pl.LightningModule):
         x = self.mp1(x, edge_index)
         #x = F.leaky_relu(x)
         x = F.tanh(x)
-        for _ in range(self.args().num_layers):
+        for _ in range(self.args.num_layers):
             x = self.mp2(x, edge_index)
             x = F.tanh(x)
             x = self.dropout(x)
@@ -106,9 +108,9 @@ class MPNNModel(pl.LightningModule):
         #fracs = torch.tensor(mol_fracs, device=self.args().device)
 
         fracs = torch.cat([frac for frac in fracs], dim=0)
-        fracs = fracs.to(self.args().device)
+        fracs = fracs.to(self.args.device)
 
-        mixture_sizes = mixture_sizes.to(self.args().device)
+        mixture_sizes = mixture_sizes.to(self.args.device)
 
         sizes = mixture_sizes.sum().item()
         shape = fracs.shape[0]
@@ -116,14 +118,14 @@ class MPNNModel(pl.LightningModule):
         assert mixture_sizes.sum().item()==fracs.shape[0]
 
         mixture_ids = torch.repeat_interleave(
-            torch.arange(len(mixture_sizes), device=self.args().device), 
+            torch.arange(len(mixture_sizes), device=self.args.device), 
             mixture_sizes)
-        contribution_sum_per_mixture = torch.zeros(len(mixture_sizes), device=self.args().device).index_add(0, mixture_ids, fracs)
+        contribution_sum_per_mixture = torch.zeros(len(mixture_sizes), device=self.args.device).index_add(0, mixture_ids, fracs)
         normalized_fracs = fracs/contribution_sum_per_mixture[mixture_ids]
 
         weighted_embeddings = x * normalized_fracs.unsqueeze(1)
 
-        mixture_embeddings = torch.zeros(len(mixture_sizes), x.size(1), device=self.args().device)
+        mixture_embeddings = torch.zeros(len(mixture_sizes), x.size(1), device=self.args.device)
         mixture_embeddings = mixture_embeddings.index_add(0, mixture_ids, weighted_embeddings)
 
         #mixture_embeddings = torch.sum(x*torch.tensor(self.args().mol_fracs).unsqueeze(1), dim=0)
@@ -136,20 +138,36 @@ class MPNNModel(pl.LightningModule):
         return out
 
     def training_step(self, batch, batch_idx):
-        out = self(batch)
-        loss = F.cross_entropy(out, batch.y)
+        batched_graphs, targets, fracs, mixture_sizes = batch
+        batched_graphs  = batched_graphs.to(self.args.device)
+        targets = targets.view(-1, 1).to(self.args.device)
+        outputs = self(batched_graphs, mixture_sizes, fracs)
+        loss = self.loss_fn(outputs, targets)
         self.log('train_loss', loss)
         return loss
 
-    def training_step(self, batch, batch_idx):
-        out = self(batch)
-        loss = F.cross_entropy(out, batch.y)
-        acc = (out.argmax(dim=1)==batch.y).float().mean()
+    def validation_step(self, batch, batch_idx):
+        batched_graphs, targets, fracs, mixture_sizes = batch
+        batched_graphs  = batched_graphs.to(self.args.device)
+        targets = targets.view(-1, 1).to(self.args.device)
+        outputs = self(batched_graphs, mixture_sizes, fracs)
+        loss = self.loss_fn(outputs, targets)
         self.log('val_loss', loss)
-        self.log('val_acc', acc)
+        return loss
 
-    def config_optimizers(self):
+    def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=1e-4)
 
+    def test_step(self, batch, batch_idx):
+        batched_graphs, targets, fracs, mixture_sizes = batch
+        preds = self(batched_graphs, mixture_sizes, fracs)
+        loss = F.mse_loss(preds, targets)
+        self.log("test_loss", loss)
 
+        return loss
+
+    def predict_step(self, batch, batch_idx):
+        batched_graphs, targets, fracs, mixture_sizes = batch
+        preds = self(batched_graphs, mixture_sizes, fracs)
+        return preds
 
