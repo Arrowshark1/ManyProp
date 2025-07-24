@@ -47,7 +47,7 @@ class Args:
         parser.add_argument('--log', type=bool, default=False, help="True if the dataset contains the log of the predicted property")
         parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
         parser.add_argument('--weight_decay', type=float, default=1e-5, help='weight decay')
-        parser.add_argument('--normalize', type=bool, default=False, help='normalizaiton of target values')
+        parser.add_argument('--normalize', type=bool, default=True, help='normalizaiton of target values')
         parser.add_argument('--mean', type=float, default=None, help='mean of target dataset. Calculated if not provided')
         parser.add_argument('--std', type=float, default=None, help='standard deviation of target dataset. Calculated if not provided')
         parser.add_argument('--lightningMPNN', type=bool, default=True, help='if true, uses a MPNN as opposed to a GCN')
