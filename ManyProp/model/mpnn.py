@@ -88,7 +88,9 @@ class MPNNModel(pl.LightningModule):
         self.mp1 = MPNNLayer(args, in_dim=self.args.input_dim, out_dim=self.args.hidden_size)
         self.mp2 = MPNNLayer(args, in_dim=self.args.hidden_size, out_dim=self.args.hidden_size)
         self.fc = torch.nn.Linear(self.args.hidden_size, out_dim)
-        
+        self.training_loss = []
+        self.val_loss = []
+       
     def forward(self, data, mixture_sizes, fracs):
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
@@ -144,6 +146,7 @@ class MPNNModel(pl.LightningModule):
         outputs = self(batched_graphs, mixture_sizes, fracs)
         loss = self.loss_fn(outputs, targets)
         self.log('train_loss', loss)
+        self.training_loss.append(loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -153,6 +156,7 @@ class MPNNModel(pl.LightningModule):
         outputs = self(batched_graphs, mixture_sizes, fracs)
         loss = self.loss_fn(outputs, targets)
         self.log('val_loss', loss)
+        self.val_loss.append(loss)
         return loss
 
     def configure_optimizers(self):

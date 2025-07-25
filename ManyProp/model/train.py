@@ -6,6 +6,8 @@ from ManyProp.model.test import test
 from ManyProp.utils import make_splits
 from ManyProp.data.data_pipeline import parse_data, make_dl
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import Callback
+#from litmodels import upload_model
 
 def train(model, args, data_loader):
     loss_fn = args.get_loss_fn()
@@ -70,7 +72,7 @@ def run_training(args):
     return losses
 
 def lightning_train(args):
-    losses = []
+    losses = {}
     for fold in range(args().num_folds):
         data_list = parse_data(args=args, num_dp=args().data_points)
         args.save()
@@ -82,17 +84,35 @@ def lightning_train(args):
         print(f"fold: {fold}")
         model = MPNNModel(args)
 
+        save_callback=SaveBest(f"checkpoints/model{fold}.pth")       
+
         trainer = Trainer(
             max_epochs=args().epochs,
             accelerator='auto',
-            callbacks=[],
+            callbacks=[save_callback],
             log_every_n_steps=10
         )
 
         trainer.fit(model, train_dl, val_dl)
         trainer.test(model, dataloaders=test_dl)
 
-        torch.save(model.state_dict(), f"checkpoints/model{fold}.pth")
+        losses["train_loss"] = model.training_loss
+        losses["val_loss"] = model.val_loss
+
+        #upload_model(model)
+
         #for log in trainer.logged_metrics:
         #    losses.append([fold, log.get("epoch", -1), log.get("train_loss"), log.get("val_loss")])
     return losses
+
+class SaveBest(Callback):
+    def __init__(self, path):
+        self.path = path
+        self.best_loss = float('inf')
+
+    def on_validation_end(self, trainer, pl_module):
+        val_loss = trainer.callback_metrics.get("val_loss")
+        if val_loss is not None and val_loss < self.best_loss:
+            self.best_loss = val_loss
+            torch.save(pl_module.state_dict(), self.path)
+            print("saved_model")

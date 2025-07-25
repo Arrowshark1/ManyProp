@@ -50,7 +50,9 @@ class Args:
         parser.add_argument('--normalize', type=bool, default=True, help='normalizaiton of target values')
         parser.add_argument('--mean', type=float, default=None, help='mean of target dataset. Calculated if not provided')
         parser.add_argument('--std', type=float, default=None, help='standard deviation of target dataset. Calculated if not provided')
-        parser.add_argument('--lightningMPNN', type=bool, default=True, help='if true, uses a MPNN as opposed to a GCN')
+        parser.add_argument('--lightningMPNN', type=bool, default=False, help='if true, uses a MPNN as opposed to a GCN')
+        #parser.add_argument('--upload', type=bool, default=False, help="also saves the trained model to litmodels")
+        parser.add_argument('--loss_func', type=str, default='tanh', help='loss function')
 
         return parser.parse_known_args()
 
@@ -69,6 +71,7 @@ class Args:
             self.args.mean = loaded_args.mean
             self.args.std = loaded_args.std
             self.args.normalize = loaded_args.normalize
+            self.args.lightningMPNN = loaded_args.lightningMPNN
 
 
     def get_loss_fn(self):
