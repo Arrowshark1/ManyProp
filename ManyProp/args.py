@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import json
 import types
+import torch.nn.functional as F
 
 class Args:
     def __init__(self):
@@ -52,7 +53,7 @@ class Args:
         parser.add_argument('--std', type=float, default=None, help='standard deviation of target dataset. Calculated if not provided')
         parser.add_argument('--lightningMPNN', type=bool, default=False, help='if true, uses a MPNN as opposed to a GCN')
         #parser.add_argument('--upload', type=bool, default=False, help="also saves the trained model to litmodels")
-        parser.add_argument('--loss_func', type=str, default='tanh', help='loss function')
+        parser.add_argument('--activation', type=str, default='tanh', help='loss function')
 
         return parser.parse_known_args()
 
@@ -85,7 +86,6 @@ class Args:
             case 'L1':
                 return nn.L1Loss()
 
-    
     def get_optimizer(self, params):
         lr = self.args.lr
         weight_decay=self.args.weight_decay
@@ -96,3 +96,18 @@ class Args:
                 return optim.SGD(params, lr=lr, weight_decay=weight_decay)
             case _:
                 return optim.Adam(params, lr=lr, weight_decay=weight_decay)
+
+    def get_activation(self):
+        match self.args.activation:
+            case 'tanh':
+                return F.tanh
+            case 'relu':
+                return F.relu
+            case 'leaky_relu':
+                return F.leaky_relu
+            case 'sigmoid':
+                return F.sigmoid
+            case 'gelu':
+                return F.gelu
+            case _:
+                return F.relu

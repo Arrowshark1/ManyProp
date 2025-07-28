@@ -96,13 +96,13 @@ def lightning_train(args):
         trainer.fit(model, train_dl, val_dl)
         trainer.test(model, dataloaders=test_dl)
 
-        losses["train_loss"] = model.training_loss
-        losses["val_loss"] = model.val_loss
+        losses[f"fold{fold}"] = {
+            "train_loss": [loss.detach().cpu().item() for loss in model.training_loss],
+            "val_loss": [loss.detach().cpu().item() for loss in model.val_loss]
+        }
 
         #upload_model(model)
 
-        #for log in trainer.logged_metrics:
-        #    losses.append([fold, log.get("epoch", -1), log.get("train_loss"), log.get("val_loss")])
     return losses
 
 class SaveBest(Callback):

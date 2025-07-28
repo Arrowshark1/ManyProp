@@ -9,6 +9,7 @@ class GCN(torch.nn.Module):
     def __init__(self, in_dim, args, out_dim=1):
         super(GCN, self).__init__()
         self.hidden_dim = args().hidden_size
+        self.activation = args.get_activation()
         self.args = args
         self.conv1=SAGEConv(in_dim, self.hidden_dim)
         self.conv2=SAGEConv(self.hidden_dim, self.hidden_dim)
@@ -20,10 +21,10 @@ class GCN(torch.nn.Module):
 
         x = self.conv1(x, edge_index)
         #x = F.leaky_relu(x)
-        x = F.tanh(x)
+        x = self.activation(x)
         for _ in range(self.args().num_layers):
             x = self.conv2(x, edge_index)
-            x = F.tanh(x)
+            x = self.activation(x)
             x = self.dropout(x)
         #x = F.leaky_relu(x)
 
@@ -95,27 +96,18 @@ class MPNNModel(pl.LightningModule):
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
         x = self.mp1(x, edge_index)
-        #x = F.leaky_relu(x)
         x = F.tanh(x)
         for _ in range(self.args.num_layers):
             x = self.mp2(x, edge_index)
             x = F.tanh(x)
             x = self.dropout(x)
-        #x = F.leaky_relu(x)
 
         x = global_mean_pool(x, batch)
-
-        #mixture_embeddings = torch.split(x, tuple(mixture_sizes.tolist()))
-
-        #fracs = torch.tensor(mol_fracs, device=self.args().device)
 
         fracs = torch.cat([frac for frac in fracs], dim=0)
         fracs = fracs.to(self.args.device)
 
         mixture_sizes = mixture_sizes.to(self.args.device)
-
-        sizes = mixture_sizes.sum().item()
-        shape = fracs.shape[0]
 
         assert mixture_sizes.sum().item()==fracs.shape[0]
 
