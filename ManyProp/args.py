@@ -21,8 +21,8 @@ class Args:
 
     def make_parser(self):
         parser = argparse.ArgumentParser(description = 'training args')
-        parser.add_argument('--data_path', type=str, default='./data/data.csv', help='path to data')
-        parser.add_argument('--mol_features_path', type=str, default='./data/features.csv', help='path to features')
+        parser.add_argument('--data_path', type=str, default='./ext_data/data.csv', help='path to data')
+        parser.add_argument('--mol_features_path', type=str, default='./ext_data/features.csv', help='path to features')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='path to models')
         parser.add_argument('--num_mols', type=int, default=2, help="number of molecules")
         parser.add_argument('--smiles_columns', nargs='+', type=str, default=["mol1", "mol2"], help="list of columns containing molecule smiles strings")
