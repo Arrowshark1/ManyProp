@@ -4,7 +4,7 @@ A simple machine learning project made for an internship at NIST. Predicts a sin
 ## Installation
 ___
 - `git clone https://github.com/Arrowshark1/ManyProp.git` 
-- `cd ManyProp
+- `cd ManyProp`
 - `python -m venv ./manypropenv`
 - `cd manypropenv` 
 - `.\manypropenv\Scripts\activate`
