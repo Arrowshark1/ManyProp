@@ -13,7 +13,6 @@ def evaluate(model, args, data_loader):
             targets = targets.to(args().device)
             preds = model(batch, mixture_sizes, fracs)
 
-
             loss = loss_fn(preds, targets)
 
             total_loss += loss.item()

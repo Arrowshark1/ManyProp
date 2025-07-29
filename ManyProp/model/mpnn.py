@@ -42,6 +42,10 @@ class GCN(torch.nn.Module):
         sizes = mixture_sizes.sum().item()
         shape = fracs.shape[0]
 
+        if self.args().num_mols ==1:
+            x = self.fc(x)
+            return x 
+        
         assert mixture_sizes.sum().item()==fracs.shape[0]
 
         mixture_ids = torch.repeat_interleave(
@@ -103,6 +107,10 @@ class MPNNModel(pl.LightningModule):
             x = self.dropout(x)
 
         x = global_mean_pool(x, batch)
+
+        if self.args.num_mols ==1:
+            x = self.fc(x)
+            return x
 
         fracs = torch.cat([frac for frac in fracs], dim=0)
         fracs = fracs.to(self.args.device)
