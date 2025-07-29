@@ -1,4 +1,4 @@
-data/
+ext_data/
 checkpoints/
 manypropenv/
 lightning_logs/
