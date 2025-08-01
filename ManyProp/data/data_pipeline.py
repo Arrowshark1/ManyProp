@@ -67,7 +67,8 @@ def parse_data(args, num_dp=None, offs=0):
 
     all_data = all_data.dropna()
 
-    all_data = all_data.sample(frac=1)
+    if args().shuffle_data:
+        all_data = all_data.sample(frac=1)
 
     args().mean = np.mean(all_data[args().targets_column]) if args().mean is None else args().mean
     args().std = np.std(all_data[args().targets_column]) if args().std is None else args().std

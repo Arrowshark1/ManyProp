@@ -20,19 +20,13 @@ class GCN(torch.nn.Module):
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
         x = self.conv1(x, edge_index)
-        #x = F.leaky_relu(x)
         x = self.activation(x)
         for _ in range(self.args().num_layers):
             x = self.conv2(x, edge_index)
             x = self.activation(x)
             x = self.dropout(x)
-        #x = F.leaky_relu(x)
 
         x = global_mean_pool(x, batch)
-
-        #mixture_embeddings = torch.split(x, tuple(mixture_sizes.tolist()))
-
-        #fracs = torch.tensor(mol_fracs, device=self.args().device)
 
         fracs = torch.cat([frac for frac in fracs], dim=0)
         fracs = fracs.to(self.args().device)
@@ -58,12 +52,6 @@ class GCN(torch.nn.Module):
 
         mixture_embeddings = torch.zeros(len(mixture_sizes), x.size(1), device=self.args().device)
         mixture_embeddings = mixture_embeddings.index_add(0, mixture_ids, weighted_embeddings)
-
-        #mixture_embeddings = torch.sum(x*torch.tensor(self.args().mol_fracs).unsqueeze(1), dim=0)
-
-        #mixture_vectors = torch.stack([emb.mean(dim=0) for emb in mixture_embeddings])
-
-        #out = self.fc(mixture_vectors)
         out = self.fc(mixture_embeddings)
 
         return out

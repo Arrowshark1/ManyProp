@@ -54,6 +54,7 @@ class Args:
         parser.add_argument('--lightningMPNN', type=bool, default=False, help='if true, uses a MPNN as opposed to a GCN')
         #parser.add_argument('--upload', type=bool, default=False, help="also saves the trained model to litmodels")
         parser.add_argument('--activation', type=str, default='tanh', help='loss function')
+        parser.add_argument('--shuffle_data', type=bool, default=False, help="shuffle dataset")
 
         return parser.parse_known_args()
 
